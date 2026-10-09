@@ -1,0 +1,28 @@
+# Environnements Python et fichiers temporaires
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Fichiers d'IDE et du système
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fichiers produits par Unreal Engine
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+*.sln
+*.xcodeproj/

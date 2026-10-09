@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible issue
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Description
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: 1. ...\n2. ...
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: UE Logger, Python, and Unreal Engine versions.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Errors or screenshots
+      description: Remove sensitive information before attaching files.
+    validations:
+      required: false
