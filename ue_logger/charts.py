@@ -1,4 +1,4 @@
-"""Histogramme temporel interactif des journaux Unreal."""
+"""Interactive time histogram for Unreal Engine logs."""
 
 from collections import Counter
 from datetime import datetime, timedelta
@@ -8,7 +8,7 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QToolTip, QWidget
 
 
-# Couleurs stables par niveau Unreal, communes à toutes les catégories.
+# Stable Unreal verbosity colors shared across all categories.
 LEVEL_COLORS = {
     "Fatal": "#ff4d4d",
     "Error": "#ff6b6b",
@@ -21,13 +21,13 @@ LEVEL_COLORS = {
 
 
 class FrequencyChart(QWidget):
-    """Affiche des barres temporelles empilées et permet de sélectionner une plage."""
+    """Display stacked time bars and allow selecting a time range."""
 
     range_selected = Signal(object, object)
     reset_requested = Signal()
 
     def __init__(self, parent=None) -> None:
-        """Initialise l'état du graphique et ses interactions souris."""
+        """Initialize chart state and mouse interactions."""
         super().__init__(parent)
         self.setMinimumHeight(190)
         self.setMouseTracking(True)
@@ -44,26 +44,26 @@ class FrequencyChart(QWidget):
         self._hits = []
 
     def set_entries(self, entries) -> None:
-        """Remplace les événements affichés et redessine le graphique."""
+        """Replace the displayed events and redraw the chart."""
         self.entries = list(entries)
         self.update()
 
     def set_period(self, period, start=None, end=None) -> None:
-        """Définit la période de base sans toucher à la sélection par glissement."""
+        """Set the base period without changing the drag selection."""
         self.period = period
         self.custom_start = start
         self.custom_end = end
         self.update()
 
     def clear_selection(self) -> None:
-        """Efface uniquement la plage sélectionnée, sans modifier la période."""
+        """Clear only the selected range without changing the period."""
         self.selected_range = None
         self._drag_start = None
         self._drag_current = None
         self.update()
 
     def _entry_datetime(self, entry):
-        """Convertit la date et l'heure de l'événement, ou ignore les lignes sans date."""
+        """Convert the event date and time, or ignore entries without a timestamp."""
         if not entry.date or not entry.time:
             return None
         try:
@@ -72,7 +72,7 @@ class FrequencyChart(QWidget):
             return None
 
     def _bounds(self, events):
-        """Retourne les bornes demandées, en s'adaptant aux données disponibles."""
+        """Return the requested bounds, adjusted to the available data."""
         now = datetime.now()
         if self.period == "custom" and self.custom_start and self.custom_end:
             start, end = self.custom_start, self.custom_end
@@ -89,17 +89,17 @@ class FrequencyChart(QWidget):
         return start, end
 
     def _x_for_time(self, value):
-        """Projette un instant vers la coordonnée horizontale du graphique."""
+        """Map a timestamp to the chart's horizontal coordinate."""
         span = (self._display_end - self._display_start).total_seconds()
         return self._plot_rect.left() + (value - self._display_start).total_seconds() / span * self._plot_rect.width()
 
     def _time_for_x(self, x):
-        """Convertit une coordonnée horizontale en instant dans la période affichée."""
+        """Convert a horizontal coordinate to a timestamp in the displayed period."""
         ratio = (x - self._plot_rect.left()) / self._plot_rect.width()
         return self._display_start + (self._display_end - self._display_start) * ratio
 
     def paintEvent(self, _event) -> None:
-        """Dessine l'histogramme, sa légende de niveaux et la sélection active."""
+        """Draw the histogram, verbosity legend, and active selection."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor("#151b25"))
@@ -108,7 +108,7 @@ class FrequencyChart(QWidget):
         self._hits = []
         if start is None:
             painter.setPen(QColor("#aab1bd"))
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Aucun log horodaté pour cette période")
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No timestamped logs in this period")
             self._plot_rect = QRectF()
             self._display_start = self._display_end = None
             return
@@ -179,21 +179,21 @@ class FrequencyChart(QWidget):
                 painter.drawRect(QRectF(x1, self._plot_rect.top(), x2 - x1, self._plot_rect.height()))
 
     def _drag_range(self):
-        """Retourne les bornes provisoires pendant le glissement de sélection."""
+        """Return the temporary bounds while the user drags a selection."""
         if self._drag_start is None or self._drag_current is None or self._display_start is None:
             return None
         values = sorted((self._time_for_x(self._drag_start), self._time_for_x(self._drag_current)))
         return values
 
     def mousePressEvent(self, event) -> None:
-        """Démarre une sélection de plage lorsque le clic est dans la zone tracée."""
+        """Start a range selection when the click is inside the plot area."""
         if event.button() == Qt.MouseButton.LeftButton and self._plot_rect.contains(event.position()):
             self._drag_start = event.position().x()
             self._drag_current = self._drag_start
             self.update()
 
     def mouseMoveEvent(self, event) -> None:
-        """Actualise la sélection ou affiche les détails de la barre survolée."""
+        """Update the selection or display details for the hovered bar."""
         if self._drag_start is not None:
             self._drag_current = max(self._plot_rect.left(), min(self._plot_rect.right(), event.position().x()))
             self.update()
@@ -207,7 +207,7 @@ class FrequencyChart(QWidget):
             self.unsetCursor()
 
     def mouseReleaseEvent(self, event) -> None:
-        """Valide et conserve la plage sélectionnée sans changer la période de base."""
+        """Commit the selected range without changing the base period."""
         if event.button() != Qt.MouseButton.LeftButton or self._drag_start is None:
             return
         self._drag_current = max(self._plot_rect.left(), min(self._plot_rect.right(), event.position().x()))
@@ -220,6 +220,6 @@ class FrequencyChart(QWidget):
         self.update()
 
     def mouseDoubleClickEvent(self, _event) -> None:
-        """Efface la sélection active en conservant la période courante."""
+        """Clear the active selection while preserving the current period."""
         self.clear_selection()
         self.reset_requested.emit()

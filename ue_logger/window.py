@@ -1,4 +1,4 @@
-"""Fenêtre principale de l'application UE Logger."""
+"""Main window for the UE Logger application."""
 
 from pathlib import Path
 from datetime import datetime
@@ -20,10 +20,10 @@ from ue_logger_backend import LogTailer, VERBOSITIES
 
 
 class MainWindow(QMainWindow):
-    """Présente les logs Unreal et leurs outils de recherche en temps réel."""
+    """Display Unreal logs and provide real-time search and filtering tools."""
 
     def __init__(self, start_path: str | None = None) -> None:
-        """Construit l'interface et démarre la lecture périodique."""
+        """Build the interface and start periodic log polling."""
         super().__init__()
         self.setWindowTitle("UE Logger")
         self.resize(1300, 750)
@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
             self.open_path(start_path)
 
     def _build_table(self) -> None:
-        """Crée la table des événements et le panneau de message complet."""
+        """Create the event table and full-message detail panel."""
         self.view = QTableView()
         self.view.setModel(self.proxy)
         badge_delegate = LogBadgeDelegate(self.view)
@@ -81,38 +81,38 @@ class MainWindow(QMainWindow):
         self.view.selectionModel().selectionChanged.connect(self._show_detail)
 
         self.detail = QPlainTextEdit(readOnly=True)
-        self.detail.setPlaceholderText("Sélectionnez une ligne pour afficher le message complet.")
+        self.detail.setPlaceholderText("Select a row to view the full message.")
 
         chart_panel = QWidget()
         chart_panel.setObjectName("chartPanel")
         chart_layout = QVBoxLayout(chart_panel)
         chart_layout.setContentsMargins(6, 4, 6, 4)
         chart_header = QHBoxLayout()
-        chart_header.addWidget(QLabel("Logs par intervalle"))
-        chart_header.addWidget(QLabel("Période :"))
+        chart_header.addWidget(QLabel("Logs over time"))
+        chart_header.addWidget(QLabel("Period:"))
         self.period_combo = QComboBox()
-        self.period_combo.addItem("Toute la session", "all")
-        self.period_combo.addItem("Dernière minute", 60)
-        self.period_combo.addItem("5 dernières minutes", 5 * 60)
-        self.period_combo.addItem("15 dernières minutes", 15 * 60)
-        self.period_combo.addItem("Dernière heure", 60 * 60)
-        self.period_combo.addItem("6 dernières heures", 6 * 60 * 60)
-        self.period_combo.addItem("Dernières 24 heures", 24 * 60 * 60)
-        self.period_combo.addItem("Personnalisée", "custom")
+        self.period_combo.addItem("All session", "all")
+        self.period_combo.addItem("Last minute", 60)
+        self.period_combo.addItem("Last 5 minutes", 5 * 60)
+        self.period_combo.addItem("Last 15 minutes", 15 * 60)
+        self.period_combo.addItem("Last hour", 60 * 60)
+        self.period_combo.addItem("Last 6 hours", 6 * 60 * 60)
+        self.period_combo.addItem("Last 24 hours", 24 * 60 * 60)
+        self.period_combo.addItem("Custom", "custom")
         self.period_combo.currentIndexChanged.connect(self._on_chart_period_changed)
         chart_header.addWidget(self.period_combo)
 
         self.custom_period = QWidget()
         custom_period_layout = QHBoxLayout(self.custom_period)
         custom_period_layout.setContentsMargins(0, 0, 0, 0)
-        custom_period_layout.addWidget(QLabel("Du"))
+        custom_period_layout.addWidget(QLabel("From"))
         self.period_start = QDateTimeEdit()
         self.period_start.setCalendarPopup(True)
         self.period_start.setDisplayFormat("dd/MM/yyyy HH:mm:ss")
         self.period_start.setDateTime(self.period_start.dateTime().addDays(-1))
         self.period_start.dateTimeChanged.connect(self._on_chart_dates_changed)
         custom_period_layout.addWidget(self.period_start)
-        custom_period_layout.addWidget(QLabel("au"))
+        custom_period_layout.addWidget(QLabel("to"))
         self.period_end = QDateTimeEdit()
         self.period_end.setCalendarPopup(True)
         self.period_end.setDisplayFormat("dd/MM/yyyy HH:mm:ss")
@@ -124,8 +124,8 @@ class MainWindow(QMainWindow):
         chart_layout.addLayout(chart_header)
         self.chart = FrequencyChart()
         self.chart.setToolTip(
-            "Faites glisser pour sélectionner une plage sans modifier la période. "
-            "Survolez une barre pour ses détails; double-cliquez pour effacer la sélection."
+            "Drag to select a range without changing the chart period. "
+            "Hover over a bar for details; double-click to clear the selection."
         )
         self.chart.range_selected.connect(self._on_chart_range_selected)
         self.chart.reset_requested.connect(self._reset_chart_range)
@@ -141,28 +141,28 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(splitter)
 
     def _build_toolbar(self) -> None:
-        """Ajoute les commandes de suivi, de niveau et de recherche."""
-        toolbar = QToolBar("Outils")
+        """Add file tracking, verbosity, and search controls."""
+        toolbar = QToolBar("Tools")
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
-        toolbar.addAction("Ouvrir un fichier…", self._choose_file)
-        toolbar.addAction("Ouvrir un dossier Logs…", self._choose_directory)
-        self.socket_status_label = QLabel("Socket Unreal : démarrage…")
+        toolbar.addAction("Open file…", self._choose_file)
+        toolbar.addAction("Open Logs folder…", self._choose_directory)
+        self.socket_status_label = QLabel("Unreal socket: starting…")
         self.socket_status_label.setObjectName("socketStatus")
         self.socket_status_label.setProperty("status", "starting")
         toolbar.addWidget(self.socket_status_label)
-        toolbar.addAction("Copier commande UE", self._copy_unreal_command)
+        toolbar.addAction("Copy UE command", self._copy_unreal_command)
         toolbar.addSeparator()
         self.act_pause = QAction("Pause", self, checkable=True)
         self.act_pause.toggled.connect(self._on_pause_toggled)
         toolbar.addAction(self.act_pause)
-        toolbar.addAction("Effacer", self._clear_logs)
-        self.act_scroll = QAction("Défilement auto", self, checkable=True, checked=True)
+        toolbar.addAction("Clear", self._clear_logs)
+        self.act_scroll = QAction("Auto-scroll", self, checkable=True, checked=True)
         toolbar.addAction(self.act_scroll)
         toolbar.addSeparator()
 
-        toolbar.addWidget(QLabel("  Recherche : "))
-        self.search = QLineEdit(placeholderText="Texte ou expression…", clearButtonEnabled=True)
+        toolbar.addWidget(QLabel("  Search: "))
+        self.search = QLineEdit(placeholderText="Text or expression…", clearButtonEnabled=True)
         self.search.setMinimumWidth(240)
         self.search.textChanged.connect(self._on_search)
         toolbar.addWidget(self.search)
@@ -171,13 +171,13 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(self.regex)
 
     def _build_category_dock(self) -> None:
-        """Ajoute les filtres de projet, niveau et catégorie dans le panneau latéral."""
+        """Add project, verbosity, and category filters to the side panel."""
         self.project_list = QListWidget()
         self.project_list.setMaximumHeight(130)
         self.project_list.itemChanged.connect(self._on_project_changed)
 
         self.level_checks: dict[str, QCheckBox] = {}
-        level_group = QGroupBox("Niveaux affichés")
+        level_group = QGroupBox("Visible levels")
         level_layout = QGridLayout(level_group)
         level_layout.setContentsMargins(8, 6, 8, 6)
         for index, level in enumerate(VERBOSITIES):
@@ -191,8 +191,8 @@ class MainWindow(QMainWindow):
         self.category_list.setItemDelegate(CategoryBadgeDelegate(self.category_list))
         self.category_list.setSpacing(3)
         self.category_list.itemClicked.connect(self._toggle_category_item)
-        all_button = QPushButton("Tout")
-        none_button = QPushButton("Aucun")
+        all_button = QPushButton("All")
+        none_button = QPushButton("None")
         all_button.clicked.connect(lambda: self._set_all_categories(True))
         none_button.clicked.connect(lambda: self._set_all_categories(False))
         buttons = QHBoxLayout()
@@ -201,29 +201,29 @@ class MainWindow(QMainWindow):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(4, 4, 4, 4)
-        layout.addWidget(QLabel("Projets Unreal"))
+        layout.addWidget(QLabel("Unreal projects"))
         layout.addWidget(self.project_list)
         layout.addWidget(level_group)
-        layout.addWidget(QLabel("Catégories"))
+        layout.addWidget(QLabel("Categories"))
         layout.addLayout(buttons)
         layout.addWidget(self.category_list)
-        dock = QDockWidget("Sources et filtres", self)
+        dock = QDockWidget("Sources and filters", self)
         dock.setWidget(content)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
 
     def _on_search(self, *_args) -> None:
-        """Applique les critères de recherche saisis dans la barre d'outils."""
+        """Apply the search criteria entered in the toolbar."""
         self.proxy.set_search(self.search.text(), self.regex.isChecked())
         self._schedule_chart_refresh()
 
     def _on_level_toggled(self, _checked: bool) -> None:
-        """Applique les niveaux cochés et actualise les statistiques visibles."""
+        """Apply selected verbosity levels and refresh visible statistics."""
         levels = {level for level, checkbox in self.level_checks.items() if checkbox.isChecked()}
         self.proxy.set_levels(levels)
         self._schedule_chart_refresh()
 
     def _on_category_changed(self, _item: QListWidgetItem) -> None:
-        """Actualise les catégories masquées après une modification de case."""
+        """Refresh hidden categories after a checkbox change."""
         hidden = {self.category_list.item(i).text()
                   for i in range(self.category_list.count())
                   if not self.category_list.item(i).data(Qt.ItemDataRole.UserRole)}
@@ -231,12 +231,12 @@ class MainWindow(QMainWindow):
         self._schedule_chart_refresh()
 
     def _toggle_category_item(self, item: QListWidgetItem) -> None:
-        """Bascule l'état d'un badge après un clic sur sa ligne entière."""
+        """Toggle a badge when its row is clicked."""
         item.setData(Qt.ItemDataRole.UserRole, not bool(item.data(Qt.ItemDataRole.UserRole)))
         self._on_category_changed(item)
 
     def _set_all_categories(self, visible: bool) -> None:
-        """Coche ou décoche toutes les catégories en une seule mise à jour."""
+        """Select or clear all categories in a single update."""
         self.category_list.blockSignals(True)
         for index in range(self.category_list.count()):
             self.category_list.item(index).setData(Qt.ItemDataRole.UserRole, visible)
@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
         self._on_category_changed(None)
 
     def _show_detail(self, *_args) -> None:
-        """Affiche le contenu complet de la première ligne sélectionnée."""
+        """Display the full content of the first selected row."""
         rows = self.view.selectionModel().selectedRows()
         if not rows:
             self.detail.clear()
@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
         )
 
     def _copy_selection(self) -> None:
-        """Copie les lignes sélectionnées dans le presse-papiers."""
+        """Copy selected rows to the clipboard."""
         rows = sorted(row.row() for row in self.view.selectionModel().selectedRows())
         copied = []
         for row in rows:
@@ -270,39 +270,39 @@ class MainWindow(QMainWindow):
         QApplication.clipboard().setText("\n".join(copied))
 
     def _choose_file(self) -> None:
-        """Demande à l'utilisateur un fichier de log à suivre."""
+        """Prompt the user to select a log file to follow."""
         path, _filter = QFileDialog.getOpenFileName(
-            self, "Ouvrir un log", "", "Logs Unreal (*.log *.txt);;Tous les fichiers (*)"
+            self, "Open a log", "", "Unreal logs (*.log *.txt);;All files (*)"
         )
         if path:
             self.open_path(path)
 
     def _choose_directory(self) -> None:
-        """Demande un dossier Saved/Logs à surveiller."""
-        directory = QFileDialog.getExistingDirectory(self, "Choisir le dossier Saved/Logs")
+        """Prompt the user to select a Saved/Logs directory to monitor."""
+        directory = QFileDialog.getExistingDirectory(self, "Select the Saved/Logs folder")
         if directory:
             self.open_path(directory)
 
     def _copy_unreal_command(self) -> None:
-        """Copie la commande à coller dans la console Python de l'éditeur Unreal."""
+        """Copy the command to paste into Unreal Editor's Python console."""
         bridge_script = Path(__file__).resolve().parent.parent / "unreal_bridge" / "ue_logger_bridge.py"
         command = f'py "{bridge_script.as_posix()}"'
         QApplication.clipboard().setText(command)
-        self.status.showMessage("Commande Unreal copiée. Collez-la dans la console Python de l'éditeur.", 6000)
+        self.status.showMessage("Unreal command copied. Paste it into the editor's Python console.", 6000)
 
     def _on_server_status(self, message: str) -> None:
-        """Affiche l'état du serveur socket dans la barre d'état et les outils."""
+        """Display the socket server status in the status bar and controls."""
         self.statusBar().showMessage(message)
         if hasattr(self, "socket_status_label"):
-            state = "unavailable" if "Impossible" in message else "connected"
+            state = "unavailable" if "Unable" in message else "connected"
             self.socket_status_label.setProperty("status", state)
             self.socket_status_label.style().unpolish(self.socket_status_label)
             self.socket_status_label.style().polish(self.socket_status_label)
-            label = "indisponible" if state == "unavailable" else "actif"
-            self.socket_status_label.setText(f"Socket Unreal : {label}")
+            label = "unavailable" if state == "unavailable" else "active"
+            self.socket_status_label.setText(f"Unreal socket: {label}")
 
     def open_path(self, path: str) -> None:
-        """Réinitialise l'affichage puis suit le fichier ou dossier choisi."""
+        """Reset the view and follow the selected file or directory."""
         self._clear_logs()
         selected = Path(path)
         if selected.is_dir():
@@ -311,7 +311,7 @@ class MainWindow(QMainWindow):
             self.tailer.set_file(selected)
 
     def _clear_logs(self) -> None:
-        """Efface les événements visibles et les catégories mémorisées."""
+        """Clear visible events and remembered categories."""
         self.model.clear()
         self.proxy.set_time_range(None)
         if hasattr(self, "chart"):
@@ -322,7 +322,7 @@ class MainWindow(QMainWindow):
         self._schedule_chart_refresh()
 
     def _on_pause_toggled(self, paused: bool) -> None:
-        """Met en attente les messages réseau pendant la pause puis les rejoue."""
+        """Queue network messages while paused, then replay them on resume."""
         if not paused and self._network_backlog:
             queued = self._network_backlog
             self._network_backlog = []
@@ -330,14 +330,14 @@ class MainWindow(QMainWindow):
                 self._append_lines(lines, project_id, project_name)
 
     def _on_socket_lines(self, project_id: str, project_name: str, lines: list[str]) -> None:
-        """Reçoit les lignes relayées par le script Python exécuté dans Unreal."""
+        """Receive log lines forwarded by the Python script running in Unreal."""
         if self.act_pause.isChecked():
             self._network_backlog.append((project_id, project_name, lines))
         else:
             self._append_lines(lines, project_id, project_name)
 
     def _on_project_connected(self, project_id: str, project_name: str) -> None:
-        """Ajoute ou actualise une source Unreal connectée dans la liste."""
+        """Add or update a connected Unreal source in the list."""
         self.project_names[project_id] = project_name
         self.project_connection_counts[project_id] = (
             self.project_connection_counts.get(project_id, 0) + 1
@@ -352,26 +352,26 @@ class MainWindow(QMainWindow):
             self.project_list.addItem(item)
         item.setText(project_name)
         item.setIcon(self._project_status_icon(True))
-        item.setToolTip("Connecté")
-        self.status.showMessage(f"{project_name} connecté — réception des logs active.")
+        item.setToolTip("Connected")
+        self.status.showMessage(f"{project_name} connected — receiving logs.")
         self._on_project_changed(item)
 
     def _on_project_disconnected(self, project_id: str) -> None:
-        """Marque une source comme déconnectée tout en conservant ses logs."""
+        """Mark a source as disconnected while retaining its logs."""
         remaining = max(0, self.project_connection_counts.get(project_id, 1) - 1)
         self.project_connection_counts[project_id] = remaining
         item = self.project_items.get(project_id)
         if item is not None:
             item.setIcon(self._project_status_icon(remaining > 0))
-            item.setToolTip("Connecté" if remaining else "Déconnecté")
+            item.setToolTip("Connected" if remaining else "Disconnected")
         if remaining == 0:
             self.status.showMessage(
-                f"{self.project_names.get(project_id, 'Projet Unreal')} déconnecté — "
-                "les logs déjà reçus restent disponibles."
+                f"{self.project_names.get(project_id, 'Unreal Project')} disconnected — "
+                "previously received logs are still available."
             )
 
     def _on_project_changed(self, _item: QListWidgetItem) -> None:
-        """Filtre la table et le graphique selon les projets cochés."""
+        """Filter the table and chart based on selected projects."""
         hidden = {
             self.project_list.item(index).data(Qt.ItemDataRole.UserRole)
             for index in range(self.project_list.count())
@@ -381,7 +381,7 @@ class MainWindow(QMainWindow):
         self._schedule_chart_refresh()
 
     def _project_status_icon(self, connected: bool) -> QIcon:
-        """Crée une icône circulaire discrète pour l'état d'une source Unreal."""
+        """Create a subtle circular status icon for an Unreal source."""
         color = QColor("#35c98b" if connected else "#788397")
         pixmap = QPixmap(16, 16)
         pixmap.fill(Qt.GlobalColor.transparent)
@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
         project_id: str = "",
         project_name: str = "",
     ) -> None:
-        """Ajoute les lignes reçues à la table et actualise les catégories."""
+        """Add received lines to the table and refresh the categories."""
         categories = self.model.add_lines(lines, project_id, project_name)
         if categories:
             self.category_list.blockSignals(True)
@@ -412,18 +412,18 @@ class MainWindow(QMainWindow):
         if self.act_scroll.isChecked():
             self.view.scrollToBottom()
         self.status.showMessage(
-            f"{self._source_label()}  |  {len(self.model.entries)} lignes, "
-            f"{self.proxy.rowCount()} affichées"
+            f"{self._source_label()}  |  {len(self.model.entries)} lines, "
+            f"{self.proxy.rowCount()} displayed"
         )
         self._schedule_chart_refresh()
 
     def _schedule_chart_refresh(self) -> None:
-        """Regroupe les rafraîchissements du graphique pendant les flux rapides."""
+        """Coalesce chart refreshes during high-volume log streams."""
         if not self.chart_refresh_timer.isActive():
             self.chart_refresh_timer.start()
 
     def _refresh_chart(self, *_args) -> None:
-        """Calcule les occurrences en respectant les filtres hors plage sélectionnée."""
+        """Count occurrences using active filters, excluding the selected range."""
         if not hasattr(self, "chart"):
             return
         visible_entries = [
@@ -438,25 +438,25 @@ class MainWindow(QMainWindow):
         )
 
     def _on_chart_range_selected(self, start: datetime, end: datetime) -> None:
-        """Filtre la table sur la plage choisie sans remplacer la période du graphique."""
+        """Filter the table by the selected range without changing the chart period."""
         self.proxy.set_time_range((start, end))
         period = self.period_combo.currentText()
         self.status.showMessage(
-            f"Logs limités à {start:%H:%M:%S} – {end:%H:%M:%S}  |  "
-            f"{self.proxy.rowCount()} ligne(s) affichée(s)  |  Période : {period}"
+            f"Logs limited to {start:%H:%M:%S} – {end:%H:%M:%S}  |  "
+            f"{self.proxy.rowCount()} row(s) displayed  |  Period: {period}"
         )
 
     def _reset_chart_range(self) -> None:
-        """Efface la plage graphique et conserve la période de base sélectionnée."""
+        """Clear the chart range while keeping the selected base period."""
         self.proxy.set_time_range(None)
         self._schedule_chart_refresh()
         self.status.showMessage(
-            f"Filtre de plage effacé — période : {self.period_combo.currentText()}  |  "
-            f"{self.proxy.rowCount()} ligne(s) affichée(s)"
+            f"Time-range filter cleared — period: {self.period_combo.currentText()}  |  "
+            f"{self.proxy.rowCount()} row(s) displayed"
         )
 
     def _on_chart_period_changed(self, *_args) -> None:
-        """Affiche les dates si une période personnalisée a été sélectionnée."""
+        """Show date controls when a custom period is selected."""
         if hasattr(self, "chart"):
             self.chart.clear_selection()
             self.proxy.set_time_range(None)
@@ -465,14 +465,14 @@ class MainWindow(QMainWindow):
         self._schedule_chart_refresh()
 
     def _on_chart_dates_changed(self, *_args) -> None:
-        """Actualise l'histogramme après un changement de date ou d'heure."""
+        """Refresh the histogram after a date or time change."""
         if hasattr(self, "chart"):
             self.chart.clear_selection()
             self.proxy.set_time_range(None)
         self._schedule_chart_refresh()
 
     def poll(self) -> None:
-        """Récupère les lignes ajoutées depuis le dernier cycle de lecture."""
+        """Retrieve lines appended since the previous polling cycle."""
         if isinstance(self.period_combo.currentData(), int):
             self._schedule_chart_refresh()
         if self.act_pause.isChecked():
@@ -482,24 +482,24 @@ class MainWindow(QMainWindow):
             self._clear_logs()
         if not lines:
             if switched and self.tailer.path is not None:
-                self.status.showMessage(f"Suivi de {self._source_label()} — en attente de nouvelles lignes…")
+                self.status.showMessage(f"Following {self._source_label()} — waiting for new lines…")
             return
         source_path = self.tailer.path or self.tailer.directory
         local_name = source_path.stem if source_path and source_path.is_file() else (
-            source_path.name if source_path else "Fichier local"
+            source_path.name if source_path else "Local file"
         )
         local_id = f"local:{source_path}" if source_path else "local"
         self._append_lines(lines, local_id, local_name)
 
     def _source_label(self) -> str:
-        """Retourne le nom du projet connecté ou le chemin du log suivi."""
+        """Return the connected project name or the path of the followed log."""
         project_count = sum(1 for count in self.project_connection_counts.values() if count > 0)
         if project_count:
             plural = "s" if project_count > 1 else ""
-            return f"{project_count} projet Unreal{plural} connecté{plural}"
-        return str(self.tailer.path or self.tailer.directory or "En attente de connexions Unreal")
+            return f"{project_count} Unreal project{plural} connected"
+        return str(self.tailer.path or self.tailer.directory or "Waiting for Unreal connections")
 
     def closeEvent(self, event) -> None:
-        """Ferme le socket local avant de détruire la fenêtre."""
+        """Close the local socket before destroying the window."""
         self.socket_server.stop()
         super().closeEvent(event)

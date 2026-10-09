@@ -1,4 +1,4 @@
-"""Initialisation de Qt et lancement de l'application."""
+"""Initialize Qt and start the application."""
 
 import sys
 
@@ -9,7 +9,7 @@ from .window import MainWindow
 
 
 def _acquire_windows_instance_guard():
-    """Empêche plusieurs lancements automatiques d'ouvrir plusieurs fenêtres sous Windows."""
+    """Prevent multiple automatic launches from opening multiple windows on Windows."""
     if sys.platform != "win32":
         return None, False
 
@@ -30,7 +30,7 @@ def _acquire_windows_instance_guard():
 
 
 def main() -> None:
-    """Démarre l'interface, avec un chemin de log optionnel en argument."""
+    """Start the user interface with an optional log path argument."""
     mutex, already_open = _acquire_windows_instance_guard()
     if already_open:
         return

@@ -1,4 +1,4 @@
-"""Compatibilité historique vers le lecteur de la bibliothèque backend."""
+"""Backward-compatible re-export of the backend library file reader."""
 
 from ue_logger_backend.tailer import LogTailer
 

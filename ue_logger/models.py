@@ -1,4 +1,4 @@
-"""Modèle Qt des événements et règles de filtrage de la vue."""
+"""Qt event model and view filtering rules."""
 
 import re
 from datetime import datetime
@@ -10,7 +10,7 @@ from .delegates import badge_color
 from ue_logger_backend.parser import LogEntry, VERBOSITIES, parse_line
 
 
-# Couleurs lisibles sur le thème sombre de l'application.
+# Colors chosen for readability against the application's dark theme.
 VERBOSITY_COLORS = {
     "Fatal": "#ff4d4d", "Error": "#ff6b6b", "Warning": "#e5c07b",
     "Display": "#98c379", "Log": "#c8ccd4", "Verbose": "#7f848e",
@@ -20,33 +20,33 @@ VERBOSITY_ORDER = {level: rank for rank, level in enumerate(VERBOSITIES)}
 
 
 class LogTableModel(QAbstractTableModel):
-    """Expose les événements Unreal sous forme de tableau Qt."""
+    """Expose Unreal events through a Qt table model."""
 
-    HEADERS = ("Niveau", "Projet", "Catégorie", "Message", "Date", "Heure", "Frame")
+    HEADERS = ("Level", "Project", "Category", "Message", "Date", "Time", "Frame")
 
     def __init__(self) -> None:
-        """Crée un modèle vide et son index de catégories observées."""
+        """Create an empty model and its index of observed categories."""
         super().__init__()
         self.entries: list[LogEntry] = []
         self.categories: set[str] = set()
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        """Retourne le nombre d'événements de premier niveau."""
+        """Return the number of top-level events."""
         return 0 if parent.isValid() else len(self.entries)
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        """Retourne le nombre de colonnes du tableau."""
+        """Return the number of table columns."""
         return 0 if parent.isValid() else len(self.HEADERS)
 
     def headerData(self, section: int, orientation: Qt.Orientation,
                    role: int = Qt.ItemDataRole.DisplayRole):
-        """Fournit les titres des colonnes horizontales."""
+        """Provide the horizontal column headers."""
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.HEADERS[section]
         return None
 
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
-        """Retourne la valeur, la couleur ou l'aide contextuelle d'une cellule."""
+        """Return the value, color, or tooltip data for a table cell."""
         if not index.isValid():
             return None
         entry = self.entries[index.row()]
@@ -71,7 +71,7 @@ class LogTableModel(QAbstractTableModel):
         return None
 
     def clear(self) -> None:
-        """Supprime tous les événements et catégories du modèle."""
+        """Remove all events and categories from the model."""
         self.beginResetModel()
         self.entries.clear()
         self.categories.clear()
@@ -83,7 +83,7 @@ class LogTableModel(QAbstractTableModel):
         project_id: str = "",
         project_name: str = "",
     ) -> list[str]:
-        """Ajoute des événements et rattache les lignes non reconnues au message précédent."""
+        """Add events and append unrecognized lines to the previous message."""
         additions: list[LogEntry] = []
         for line in lines:
             entry = parse_line(line, project_id, project_name)
@@ -110,10 +110,10 @@ class LogTableModel(QAbstractTableModel):
 
 
 class LogFilterProxy(QSortFilterProxyModel):
-    """Filtre par niveaux cochés, catégories et recherche textuelle/regex."""
+    """Filter by selected verbosity levels, categories, and text or regex search."""
 
     def __init__(self) -> None:
-        """Configure les filtres par défaut pour afficher les logs standards."""
+        """Configure default filters to display standard log entries."""
         super().__init__()
         self.enabled_levels = {"Fatal", "Error", "Warning", "Display", "Log"}
         self.hidden_categories: set[str] = set()
@@ -124,12 +124,12 @@ class LogFilterProxy(QSortFilterProxyModel):
         self.time_range: tuple[datetime, datetime] | None = None
 
     def set_time_range(self, time_range: tuple[datetime, datetime] | None) -> None:
-        """Limite les lignes affichées à une plage temporelle, ou retire ce filtre."""
+        """Limit displayed entries to a time range, or remove the time filter."""
         self.time_range = time_range
         self.invalidateFilter()
 
     def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        """Compare les colonnes avec leur type naturel pour un tri lisible."""
+        """Compare columns using their natural data types for readable sorting."""
         entries = self.sourceModel().entries
         left_entry = entries[left.row()]
         right_entry = entries[right.row()]
@@ -159,7 +159,7 @@ class LogFilterProxy(QSortFilterProxyModel):
         return left_value < right_value
 
     def accepts_entry(self, entry: LogEntry, include_time: bool = True) -> bool:
-        """Vérifie les filtres actifs, avec option pour ignorer la plage temporelle."""
+        """Check active filters, optionally ignoring the selected time range."""
         if entry.verbosity not in self.enabled_levels:
             return False
         if entry.category in self.hidden_categories:
@@ -189,22 +189,22 @@ class LogFilterProxy(QSortFilterProxyModel):
         return True
 
     def set_levels(self, levels: set[str]) -> None:
-        """Définit précisément les niveaux de log autorisés dans la table."""
+        """Set the exact verbosity levels allowed in the table."""
         self.enabled_levels = set(levels)
         self.invalidateFilter()
 
     def set_hidden_categories(self, categories: set[str]) -> None:
-        """Définit les catégories masquées dans la table."""
+        """Set the categories hidden from the table."""
         self.hidden_categories = set(categories)
         self.invalidateFilter()
 
     def set_hidden_projects(self, projects: set[str]) -> None:
-        """Masque les événements provenant des projets décochés."""
+        """Hide events from projects that are not selected."""
         self.hidden_projects = set(projects)
         self.invalidateFilter()
 
     def set_search(self, text: str, use_regex: bool) -> None:
-        """Met à jour la recherche; une expression invalide ne masque pas les résultats."""
+        """Update the search; an invalid expression does not hide results."""
         self.search_text = text
         self.use_regex = use_regex
         self._regex = None
@@ -216,6 +216,6 @@ class LogFilterProxy(QSortFilterProxyModel):
         self.invalidateFilter()
 
     def filterAcceptsRow(self, row: int, parent: QModelIndex) -> bool:
-        """Indique si l'événement source passe tous les filtres actifs."""
+        """Return whether the source event passes all active filters."""
         entry: LogEntry = self.sourceModel().entries[row]
         return self.accepts_entry(entry)

@@ -1,11 +1,11 @@
-"""Palette sombre et composants visuels inspirés d'iOS et de HeroUI."""
+"""Dark palette and visual components inspired by iOS and HeroUI."""
 
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 
 
 def apply_dark_theme(app: QApplication) -> None:
-    """Applique une palette en couches, des contours doux et un accent bleu net."""
+    """Apply layered colors, soft borders, and a clear blue accent."""
     app.setStyle("Fusion")
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.Window, QColor("#10141b"))
@@ -24,7 +24,7 @@ def apply_dark_theme(app: QApplication) -> None:
 
 
 def _application_stylesheet() -> str:
-    """Retourne les styles partagés des panneaux, champs et contrôles Qt."""
+    """Return shared styles for Qt panels, fields, and controls."""
     return """
         QWidget {
             color: #e5eaf2;

@@ -67,7 +67,7 @@ class _ServerWorker(threading.Thread):
                     client_thread.start()
         except OSError as error:
             if not self.stop_event.is_set():
-                _notify(self.server.on_server_status, f"Impossible d'ouvrir le socket : {error}")
+                _notify(self.server.on_server_status, f"Unable to open socket: {error}")
         finally:
             self.listener = None
             self._close_clients()

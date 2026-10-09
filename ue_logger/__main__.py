@@ -1,4 +1,4 @@
-"""Permet le lancement avec ``python -m ue_logger``."""
+"""Enable launching with ``python -m ue_logger``."""
 
 from .app import main
 

@@ -36,7 +36,7 @@ class ParseLineTests(unittest.TestCase):
 
     def test_parses_short_startup_line(self):
         """Accept the short format used by some startup log lines."""
-        entry = parse_line("LogInit: Display: Initialisation")
+        entry = parse_line("LogInit: Display: Initialization")
 
         self.assertIsNotNone(entry)
         self.assertEqual(entry.date, "")

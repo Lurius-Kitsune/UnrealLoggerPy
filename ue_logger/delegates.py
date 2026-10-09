@@ -1,4 +1,4 @@
-"""Délégués Qt pour dessiner des badges de log et de catégorie."""
+"""Qt delegates for drawing verbosity and category badges."""
 
 from hashlib import blake2b
 
@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QStyledItemDelegate, QStyle, QStyleOptionViewItem
 
 
 def badge_color(value: str, namespace: str = "") -> QColor:
-    """Retourne une teinte stable pseudo-aléatoire pour un nom donné."""
+    """Return a stable pseudo-random tint for a given name."""
     digest = blake2b(f"{namespace}:{value}".encode("utf-8"), digest_size=4).digest()
     color = QColor()
     color.setHsl(int.from_bytes(digest[:2], "big") % 360, 180, 150 + digest[2] % 20)
@@ -16,10 +16,10 @@ def badge_color(value: str, namespace: str = "") -> QColor:
 
 
 class LogBadgeDelegate(QStyledItemDelegate):
-    """Dessine le niveau, le projet ou la catégorie comme une pastille compacte."""
+    """Draw verbosity, project, or category values as compact badges."""
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
-        """Peint le fond standard de la cellule puis son badge arrondi."""
+        """Paint the standard cell background, followed by its rounded badge."""
         cell = QStyleOptionViewItem(option)
         self.initStyleOption(cell, index)
         text = cell.text
@@ -51,10 +51,10 @@ class LogBadgeDelegate(QStyledItemDelegate):
 
 
 class CategoryBadgeDelegate(QStyledItemDelegate):
-    """Dessine les catégories en badges bleus actifs ou grisées si masquées."""
+    """Draw categories as blue badges when active and gray badges when hidden."""
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
-        """Peint une pastille pleine largeur selon l'état de la case à cocher."""
+        """Paint a full-width badge based on the checkbox state."""
         text = index.data(Qt.ItemDataRole.DisplayRole) or ""
         checked = bool(index.data(Qt.ItemDataRole.UserRole))
         rect = option.rect.adjusted(3, 3, -3, -3)
@@ -68,7 +68,7 @@ class CategoryBadgeDelegate(QStyledItemDelegate):
         painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index) -> QSize:
-        """Réserve une hauteur régulière entre les badges de catégories."""
+        """Reserve consistent vertical spacing between category badges."""
         hint = super().sizeHint(option, index)
         return QSize(hint.width(), 32)
 

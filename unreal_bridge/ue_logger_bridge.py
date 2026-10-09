@@ -1,6 +1,6 @@
-"""Envoie par socket les nouvelles lignes du journal actif d'Unreal Editor.
+"""Send new lines from Unreal Editor's active log over a socket.
 
-À lancer dans Unreal depuis le journal de sortie en mode Cmd :
+Run this script in Unreal from the Output Log in Cmd mode:
     py "C:/chemin/vers/UnrealLoggerPy/unreal_bridge/ue_logger_bridge.py"
 """
 
@@ -19,7 +19,7 @@ from pathlib import Path
 import unreal
 
 
-# Le serveur UE Logger écoute uniquement sur la boucle locale de la même machine.
+# The UE Logger server only listens on this machine's loopback interface.
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8765
 RECONNECT_SECONDS = 1.0
@@ -29,10 +29,10 @@ HEALTH_TIMEOUT_SECONDS = 0.6
 
 
 class UnrealLogBridge:
-    """Suit le journal de projet et relaie les nouvelles lignes au serveur TCP."""
+    """Follow the project log and forward new lines to the TCP server."""
 
     def __init__(self, log_directory, project_id, project_name):
-        """Initialise les chemins et les mécanismes d'arrêt du relais."""
+        """Initialize paths and relay shutdown controls."""
         self.log_directory = log_directory
         self.project_id = project_id
         self.project_name = project_name
@@ -44,15 +44,15 @@ class UnrealLogBridge:
         self.pending_lines = []
 
     def start(self):
-        """Démarre le relais dans un thread pour ne pas bloquer l'éditeur."""
+        """Start the relay in a thread so the editor remains responsive."""
         self.thread.start()
 
     def stop(self):
-        """Demande au thread de quitter et ferme les opérations d'attente."""
+        """Ask the thread to exit and close any pending wait operations."""
         self.stop_event.set()
 
     def _find_latest_log(self):
-        """Retourne le fichier Unreal actif le plus récent, hors backups."""
+        """Return the newest active Unreal log file, excluding backups."""
         matches = glob.glob(os.path.join(self.log_directory, "*.log"))
         matches += glob.glob(os.path.join(self.log_directory, "*.txt"))
         candidates = [path for path in matches
@@ -71,7 +71,7 @@ class UnrealLogBridge:
         return newest
 
     def _read_new_lines(self):
-        """Lit les octets ajoutés et conserve toute ligne encore incomplète."""
+        """Read appended bytes and retain any incomplete line."""
         latest = self._find_latest_log()
         if latest is None:
             return
@@ -108,7 +108,7 @@ class UnrealLogBridge:
             del self.pending_lines[:-MAX_PENDING_LINES]
 
     def _send_pending(self, connection):
-        """Transmet les lignes en attente au format UTF-8, une par trame."""
+        """Send queued lines as UTF-8, one line per frame."""
         while self.pending_lines and not self.stop_event.is_set():
             record = {
                 "type": "log",
@@ -119,7 +119,7 @@ class UnrealLogBridge:
             del self.pending_lines[0]
 
     def _run(self):
-        """Maintient la connexion et collecte les nouvelles lignes du journal."""
+        """Maintain the connection and collect new log lines."""
         connection = None
         next_connection_attempt = 0.0
         while not self.stop_event.is_set():
@@ -170,7 +170,7 @@ class UnrealLogBridge:
 
 
 def start_bridge():
-    """Lance UE Logger si besoin puis démarre le relais du projet courant."""
+    """Start UE Logger if needed, then launch the current project's bridge."""
     _ensure_logger_running()
     previous = getattr(builtins, "_ue_logger_bridge", None)
     if previous is not None:
@@ -182,12 +182,12 @@ def start_bridge():
     bridge = UnrealLogBridge(log_directory, project_directory, project_name)
     builtins._ue_logger_bridge = bridge
     bridge.start()
-    unreal.log("UE Logger : relais démarré pour %s" % log_directory)
+    unreal.log("UE Logger: bridge started for %s" % log_directory)
     return bridge
 
 
 def _server_is_healthy():
-    """Vérifie la disponibilité du serveur sans créer de faux projet connecté."""
+    """Check server availability without creating a false connected project."""
     try:
         with socket.create_connection(
             (SERVER_HOST, SERVER_PORT), timeout=HEALTH_TIMEOUT_SECONDS
@@ -202,13 +202,13 @@ def _server_is_healthy():
 
 
 def _logger_python_command(logger_root):
-    """Trouve Python installé avec UE Logger, avec une surcharge par variable d'environnement."""
+    """Find the Python executable used by UE Logger, with an environment override."""
     configured = os.environ.get("UE_LOGGER_PYTHON")
     if configured:
         executable = shutil.which(configured) or configured
         if os.path.isfile(executable):
             return [executable]
-        unreal.log_warning("UE Logger : interpréteur UE_LOGGER_PYTHON introuvable : %s" % configured)
+        unreal.log_warning("UE Logger: UE_LOGGER_PYTHON interpreter not found: %s" % configured)
 
     virtual_environment = logger_root / ".venv" / "Scripts"
     for name in ("pythonw.exe", "python.exe"):
@@ -228,22 +228,22 @@ def _logger_python_command(logger_root):
 
 
 def _ensure_logger_running():
-    """Démarre l'interface UE Logger si son serveur TCP n'est pas encore actif."""
+    """Start the UE Logger interface if its TCP server is not already active."""
     if _server_is_healthy():
-        unreal.log("UE Logger : le serveur TCP est déjà actif.")
+        unreal.log("UE Logger: TCP server is already active.")
         return True
 
     logger_root = Path(__file__).resolve().parent.parent
     entry_point = logger_root / "main.py"
     if not entry_point.is_file():
-        unreal.log_error("UE Logger : main.py est introuvable à %s" % logger_root)
+        unreal.log_error("UE Logger: main.py was not found at %s" % logger_root)
         return False
 
     command = _logger_python_command(logger_root)
     if not command:
         unreal.log_error(
-            "UE Logger : Python est introuvable. Installez Python avec les dépendances, "
-            "ou définissez la variable UE_LOGGER_PYTHON."
+            "UE Logger: Python was not found. Install Python and the required dependencies, "
+            "or set the UE_LOGGER_PYTHON environment variable."
         )
         return False
 
@@ -259,10 +259,10 @@ def _ensure_logger_running():
             creationflags=creation_flags,
         )
     except OSError as error:
-        unreal.log_error("UE Logger : impossible de lancer l'interface : %s" % error)
+        unreal.log_error("UE Logger: unable to launch the interface: %s" % error)
         return False
 
-    unreal.log("UE Logger : interface lancée; connexion TCP en attente.")
+    unreal.log("UE Logger: interface started; waiting for the TCP connection.")
     return True
 
 
